@@ -74,11 +74,14 @@ async function parseMovieSites(): Promise<{ movies: MovieData[], episodes: { mov
 // Parse popular movies from OMDb API
 async function parseFromOMDb(movies: MovieData[]) {
   try {
-    // Popular movie titles to search for
+    // Current popular movie titles to search for
     const popularTitles = [
-      'Oppenheimer', 'Barbie', 'Fast X', 'John Wick Chapter 4', 
-      'Spider-Man Across the Spider-Verse', 'Indiana Jones 5',
-      'Mission Impossible 7', 'The Flash', 'Transformers Rise'
+      'Dune Part Two', 'Oppenheimer', 'Barbie', 'Fast X', 'John Wick Chapter 4', 
+      'Spider-Man Across the Spider-Verse', 'Guardians of the Galaxy Vol. 3',
+      'Indiana Jones 5', 'Mission Impossible 7', 'The Flash', 'Transformers Rise',
+      'Killers of the Flower Moon', 'Napoleon', 'The Hunger Games Ballad',
+      'Aquaman 2', 'Wonka', 'Mean Girls', 'Anyone But You', 'Poor Things',
+      'The Zone of Interest', 'American Fiction', 'The Holdovers', 'Maestro'
     ];
 
     for (const title of popularTitles) {
