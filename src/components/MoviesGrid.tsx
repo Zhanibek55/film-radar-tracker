@@ -170,7 +170,7 @@ export const MoviesGrid = () => {
         return movie.type === "movie";
       case "series":
         return movie.type === "series";
-      case "fresh":
+      case "fresh": {
         // Fresh releases: torrent released within last 7 days OR new episodes within 3 days
         const now = new Date();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -185,6 +185,7 @@ export const MoviesGrid = () => {
           new Date(movie.last_episode_date) > threeDaysAgo;
           
         return isFreshMovie || isFreshSeries;
+      }
       case "quality":
         // High quality releases: score >= 80 (1080p+ WEB-DL/BluRay)
         return movie.source_quality_score && movie.source_quality_score >= 80;

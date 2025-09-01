@@ -43,7 +43,7 @@ interface EpisodeData {
 }
 
 // TMDB API functions
-async function searchTMDBMovie(title: string, year?: number): Promise<any> {
+async function searchTMDBMovie(title: string, year?: number): Promise<Record<string, unknown> | null> {
   try {
     const yearParam = year ? `&year=${year}` : '';
     const response = await fetch(
@@ -57,7 +57,7 @@ async function searchTMDBMovie(title: string, year?: number): Promise<any> {
   }
 }
 
-async function searchTMDBTV(title: string, year?: number): Promise<any> {
+async function searchTMDBTV(title: string, year?: number): Promise<Record<string, unknown> | null> {
   try {
     const yearParam = year ? `&first_air_date_year=${year}` : '';
     const response = await fetch(
@@ -71,7 +71,7 @@ async function searchTMDBTV(title: string, year?: number): Promise<any> {
   }
 }
 
-async function getTMDBMovieDetails(tmdbId: number): Promise<any> {
+async function getTMDBMovieDetails(tmdbId: number): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=ru-RU`
@@ -83,7 +83,7 @@ async function getTMDBMovieDetails(tmdbId: number): Promise<any> {
   }
 }
 
-async function getTMDBTVDetails(tmdbId: number): Promise<any> {
+async function getTMDBTVDetails(tmdbId: number): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=ru-RU`
@@ -95,7 +95,7 @@ async function getTMDBTVDetails(tmdbId: number): Promise<any> {
   }
 }
 
-async function getTMDBTVSeason(tmdbId: number, seasonNumber: number): Promise<any> {
+async function getTMDBTVSeason(tmdbId: number, seasonNumber: number): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(
       `${TMDB_BASE_URL}/tv/${tmdbId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=ru-RU`
@@ -108,7 +108,7 @@ async function getTMDBTVSeason(tmdbId: number, seasonNumber: number): Promise<an
 }
 
 // Get latest movies from TMDB (released in last 30 days)
-async function getTMDBLatestMovies(): Promise<any[]> {
+async function getTMDBLatestMovies(): Promise<Record<string, unknown>[]> {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -126,7 +126,7 @@ async function getTMDBLatestMovies(): Promise<any[]> {
 }
 
 // Get latest TV shows from TMDB (aired in last 14 days)
-async function getTMDBLatestTV(): Promise<any[]> {
+async function getTMDBLatestTV(): Promise<Record<string, unknown>[]> {
   try {
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
@@ -175,7 +175,7 @@ async function enrichWithTMDB(movieData: MovieData): Promise<MovieData> {
             backdrop_url: tmdbResult.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.backdrop_path}` : undefined,
             description: tmdbResult.overview || movieData.description,
             imdb_rating: tmdbResult.vote_average || movieData.imdb_rating,
-            genres: details.genres?.map((g: any) => g.name) || [],
+            genres: details.genres?.map((g: Record<string, unknown>) => g.name as string) || [],
             runtime: details.runtime,
             status: details.status,
             original_language: details.original_language,
@@ -197,7 +197,7 @@ async function enrichWithTMDB(movieData: MovieData): Promise<MovieData> {
             backdrop_url: tmdbResult.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.backdrop_path}` : undefined,
             description: tmdbResult.overview || movieData.description,
             imdb_rating: tmdbResult.vote_average || movieData.imdb_rating,
-            genres: details.genres?.map((g: any) => g.name) || [],
+            genres: details.genres?.map((g: Record<string, unknown>) => g.name as string) || [],
             runtime: details.episode_run_time?.[0],
             status: details.status,
             original_language: details.original_language,
