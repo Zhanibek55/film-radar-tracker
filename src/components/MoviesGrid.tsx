@@ -29,35 +29,7 @@ interface Movie {
 export const MoviesGrid = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("all");
-
-  // Trigger initial parsing on component mount if no movies exist
-  useEffect(() => {
-    const checkAndTriggerParsing = async () => {
-      const { data: existingMovies } = await supabase
-        .from('movies')
-        .select('id')
-        .limit(1);
-
-      if (!existingMovies || existingMovies.length === 0) {
-        console.log('No movies found, triggering torrent parsing...');
-        try {
-          const { data, error } = await supabase.functions.invoke('parse-movies', {
-            body: { source: 'torrents' }
-          });
-          
-          if (error) {
-            console.error('Parsing error:', error);
-          } else {
-            console.log('Torrent parsing completed:', data);
-          }
-        } catch (error) {
-          console.error('Failed to trigger torrent parsing:', error);
-        }
-      }
-    };
-
-    checkAndTriggerParsing();
-  }, []);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const { data: movies, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['movies'],
@@ -91,6 +63,54 @@ export const MoviesGrid = () => {
     },
   });
 
+  // Force trigger torrent parsing on component mount
+  useEffect(() => {
+    const forceTorrentParsing = async () => {
+      setIsInitializing(true);
+      console.log('Forcing torrent parsing...');
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('parse-movies', {
+          body: { 
+            source: 'torrents',
+            force: true,
+            timestamp: Date.now()
+          }
+        });
+        
+        if (error) {
+          console.error('Torrent parsing error:', error);
+          toast({
+            title: "Ошибка парсинга",
+            description: "Не удалось загрузить данные с торрент-сайтов",
+            variant: "destructive",
+          });
+        } else {
+          console.log('Torrent parsing completed:', data);
+          toast({
+            title: "Парсинг завершен",
+            description: "Загружены свежие данные с торрент-сайтов",
+          });
+          // Force refetch after parsing
+          setTimeout(() => {
+            refetch();
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Failed to trigger torrent parsing:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось запустить парсинг торрентов",
+          variant: "destructive",
+        });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    forceTorrentParsing();
+  }, [refetch, toast]);
+
   const handleRefresh = async () => {
     try {
       await refetch();
@@ -120,12 +140,19 @@ export const MoviesGrid = () => {
     }
   }) || [];
 
-  if (isLoading) {
+  if (isLoading || isInitializing) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-32" />
+            {isInitializing && (
+              <div className="text-sm text-muted-foreground animate-pulse">
+                Загрузка торрентов...
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
           {Array.from({ length: 14 }).map((_, i) => (
