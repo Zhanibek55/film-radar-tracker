@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MovieCard } from "./MovieCard";
-import { ParseButton } from "./ParseButton";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -124,17 +124,14 @@ export const MoviesGrid = () => {
           </p>
         </div>
         
-        <div className="flex gap-2">
-          <ParseButton onParseComplete={() => refetch()} />
-          <Button 
-            onClick={handleRefresh}
-            disabled={isFetching}
-            variant="outline"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-            Обновить
-          </Button>
-        </div>
+        <Button 
+          onClick={handleRefresh}
+          disabled={isFetching}
+          variant="outline"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+          Обновить
+        </Button>
       </div>
 
       {/* Tabs */}
