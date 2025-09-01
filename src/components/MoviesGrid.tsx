@@ -98,8 +98,8 @@ export const MoviesGrid = () => {
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
-          {Array.from({ length: 16 }).map((_, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
+          {Array.from({ length: 14 }).map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="aspect-[3/4] w-full rounded-lg" />
               <Skeleton className="h-3 w-3/4" />
@@ -169,7 +169,7 @@ export const MoviesGrid = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3">
               {filteredMovies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
