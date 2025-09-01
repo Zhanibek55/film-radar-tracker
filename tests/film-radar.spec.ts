@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Film Radar - Main Functionality', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    // Wait for page to load
+    await page.waitForTimeout(1000);
   });
 
   test('should load the main page', async ({ page }) => {
