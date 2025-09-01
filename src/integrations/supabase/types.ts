@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      episodes: {
+        Row: {
+          air_date: string | null
+          created_at: string
+          episode_number: number
+          id: string
+          movie_id: string
+          season_number: number
+          title: string | null
+        }
+        Insert: {
+          air_date?: string | null
+          created_at?: string
+          episode_number: number
+          id?: string
+          movie_id: string
+          season_number: number
+          title?: string | null
+        }
+        Update: {
+          air_date?: string | null
+          created_at?: string
+          episode_number?: number
+          id?: string
+          movie_id?: string
+          season_number?: number
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movies: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          imdb_rating: number | null
+          last_checked: string | null
+          poster_url: string | null
+          quality: string | null
+          title: string
+          type: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          imdb_rating?: number | null
+          last_checked?: string | null
+          poster_url?: string | null
+          quality?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          imdb_rating?: number | null
+          last_checked?: string | null
+          poster_url?: string | null
+          quality?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

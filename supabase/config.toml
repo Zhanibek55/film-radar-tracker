@@ -1,1 +1,4 @@
 project_id = "phqnhkncdqjyuihgrigf"
+
+[functions.parse-movies]
+verify_jwt = false

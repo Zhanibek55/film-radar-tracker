@@ -61,7 +61,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Cinema theme colors
+				'cinema-bg': 'hsl(var(--cinema-bg))',
+				'cinema-card': 'hsl(var(--cinema-card))',
+				'cinema-hover': 'hsl(var(--cinema-hover))',
+				'rating-gold': 'hsl(var(--rating-gold))',
+				'rating-bg': 'hsl(var(--rating-bg))',
+				'quality-hd': 'hsl(var(--quality-hd))',
+				'quality-4k': 'hsl(var(--quality-4k))'
+			},
+			backgroundImage: {
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-rating': 'var(--gradient-rating)'
+			},
+			boxShadow: {
+				'card': 'var(--shadow-card)',
+				'hover': 'var(--shadow-hover)',
+				'glow': 'var(--shadow-glow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
