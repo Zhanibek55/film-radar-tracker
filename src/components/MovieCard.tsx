@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Film, Tv } from "lucide-react";
+import { Clock, Film, Tv } from "lucide-react";
+import { ImdbIcon } from "./ImdbIcon";
 import moviePlaceholder from "@/assets/movie-placeholder.jpg";
 
 interface Episode {
@@ -96,7 +97,7 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
         {movie.imdb_rating && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-rating-bg via-rating-bg/80 to-transparent p-2">
             <div className="flex items-center justify-center gap-1 mb-0.5">
-              <Star className="w-3.5 h-3.5 fill-rating-gold text-rating-gold drop-shadow-lg" />
+              <ImdbIcon className="w-6 h-3 drop-shadow-lg" />
               <span className="text-rating-gold font-bold text-base drop-shadow-lg">
                 {movie.imdb_rating}
               </span>
