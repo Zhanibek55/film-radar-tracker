@@ -29,40 +29,65 @@ async function parseMovieSites(): Promise<{ movies: MovieData[], episodes: { mov
   
   const mockMovies: MovieData[] = [
     {
-      title: "Dune: Part Two",
-      year: 2024,
-      imdb_rating: 8.5,
-      description: "Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.",
-      quality: "4K",
+      title: "Guardians of the Galaxy Vol. 3",
+      year: 2023,
+      imdb_rating: 7.9,
+      description: "Still reeling from the loss of Gamora, Peter Quill rallies his team to defend the universe and one of their own.",
+      quality: "BDRip",
       type: "movie"
     },
     {
-      title: "The Last of Us",
+      title: "The Night Agent",
       year: 2023,
-      imdb_rating: 8.7,
-      description: "Joel and Ellie, a pair connected through the harshness of the world they live in, are forced to endure brutal circumstances and ruthless killers.",
-      quality: "HD",
+      imdb_rating: 7.5,
+      description: "A low-level FBI agent works in the basement of the White House manning a phone that never rings - until the night it does.",
+      quality: "NF.WEB-DL",
       type: "series"
     },
     {
-      title: "Avatar: The Way of Water",
+      title: "Scream VI",
+      year: 2023,
+      imdb_rating: 6.4,
+      description: "In the next installment, the survivors of the Ghostface killings leave Woodsboro behind and start a fresh chapter in New York City.",
+      quality: "CAMRip",
+      type: "movie"
+    },
+    {
+      title: "Wednesday",
       year: 2022,
-      imdb_rating: 7.6,
-      description: "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora.",
-      quality: "4K",
+      imdb_rating: 8.1,
+      description: "Follows Wednesday Addams' years as a student at Nevermore Academy, where she attempts to master her emerging psychic ability.",
+      quality: "WEBRip",
+      type: "series"
+    },
+    {
+      title: "Black Panther: Wakanda Forever",
+      year: 2022,
+      imdb_rating: 6.7,
+      description: "The people of Wakanda fight to protect their home from intervening world powers as they mourn the death of King T'Challa.",
+      quality: "BluRay",
       type: "movie"
     }
   ];
 
   const mockEpisodes = [
     {
-      movie_title: "The Last of Us",
+      movie_title: "The Night Agent",
       episodes: [
-        { season_number: 1, episode_number: 1, title: "When You're Lost in the Darkness" },
-        { season_number: 1, episode_number: 2, title: "Infected" },
-        { season_number: 1, episode_number: 3, title: "Long, Long Time" },
-        { season_number: 1, episode_number: 4, title: "Please Hold to My Hand" },
-        { season_number: 1, episode_number: 5, title: "Endure and Survive" }
+        { season_number: 1, episode_number: 1, title: "The Call" },
+        { season_number: 1, episode_number: 2, title: "Redacted" },
+        { season_number: 1, episode_number: 3, title: "The Trouble with All That Debt" },
+        { season_number: 1, episode_number: 4, title: "Eyes Only" },
+        { season_number: 1, episode_number: 5, title: "The Marionette" }
+      ]
+    },
+    {
+      movie_title: "Wednesday",
+      episodes: [
+        { season_number: 1, episode_number: 1, title: "Wednesday's Child Is Full of Woe" },
+        { season_number: 1, episode_number: 2, title: "Woe Is the Loneliest Number" },
+        { season_number: 1, episode_number: 3, title: "Friend or Woe" },
+        { season_number: 1, episode_number: 4, title: "Woe What a Night" }
       ]
     }
   ];
