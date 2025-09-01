@@ -74,30 +74,30 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
           }}
         />
         
-        {/* Quality Badge - Made more prominent */}
+        {/* Quality Badge - Made smaller */}
         {movie.quality && (
           <Badge 
-            className={`absolute top-2 left-2 ${getQualityColor(movie.quality)} font-bold text-xs px-2 py-1 shadow-lg`}
+            className={`absolute top-1.5 left-1.5 ${getQualityColor(movie.quality)} font-bold text-xs px-1.5 py-0.5 shadow-lg`}
           >
             {movie.quality}
           </Badge>
         )}
 
-        {/* Type Icon */}
-        <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg">
+        {/* Type Icon - Made smaller */}
+        <div className="absolute top-1.5 right-1.5 bg-background/90 backdrop-blur-sm rounded-full p-1 shadow-lg">
           {movie.type === 'series' ? (
-            <Tv className="w-3 h-3 text-foreground" />
+            <Tv className="w-2.5 h-2.5 text-foreground" />
           ) : (
-            <Film className="w-3 h-3 text-foreground" />
+            <Film className="w-2.5 h-2.5 text-foreground" />
           )}
         </div>
 
-        {/* Rating Overlay - Made much more prominent */}
+        {/* Rating Overlay - Kept prominent but more compact */}
         {movie.imdb_rating && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-rating-bg via-rating-bg/80 to-transparent p-3">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Star className="w-4 h-4 fill-rating-gold text-rating-gold drop-shadow-lg" />
-              <span className="text-rating-gold font-bold text-lg drop-shadow-lg">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-rating-bg via-rating-bg/80 to-transparent p-2">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <Star className="w-3.5 h-3.5 fill-rating-gold text-rating-gold drop-shadow-lg" />
+              <span className="text-rating-gold font-bold text-base drop-shadow-lg">
                 {movie.imdb_rating}
               </span>
             </div>
@@ -105,33 +105,33 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
         )}
       </div>
 
-      {/* Content - Made more compact */}
-      <div className="p-3 space-y-2">
-        {/* Title and Year */}
-        <div className="space-y-1">
-          <h3 className="font-semibold text-foreground text-sm line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+      {/* Content - Made even more compact */}
+      <div className="p-2 space-y-1.5">
+        {/* Title and Year - More compact */}
+        <div className="space-y-0.5">
+          <h3 className="font-semibold text-foreground text-xs line-clamp-2 group-hover:text-primary transition-colors leading-tight">
             {movie.title}
           </h3>
           {movie.year && (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-xs opacity-75">
               {movie.year}
             </p>
           )}
         </div>
 
-        {/* Series Episode Info */}
+        {/* Series Episode Info - More compact */}
         {movie.type === 'series' && latestEpisode && (
-          <div className="flex items-center gap-1.5 text-xs text-accent font-medium bg-accent/10 rounded px-2 py-1">
-            <Clock className="w-3 h-3" />
-            <span>
+          <div className="flex items-center gap-1 text-xs text-accent font-medium bg-accent/10 rounded px-1.5 py-0.5">
+            <Clock className="w-2.5 h-2.5" />
+            <span className="text-xs">
               S{latestEpisode.season_number}E{latestEpisode.episode_number}
             </span>
           </div>
         )}
 
-        {/* Description - Made shorter */}
+        {/* Description - Shorter */}
         {movie.description && (
-          <p className="text-muted-foreground text-xs line-clamp-2 leading-relaxed">
+          <p className="text-muted-foreground text-xs line-clamp-2 leading-tight opacity-75">
             {movie.description}
           </p>
         )}
