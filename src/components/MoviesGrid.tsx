@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Film, Tv, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { triggerMovieParsing } from "@/utils/triggerParsing";
 
 interface Episode {
   season_number: number;
@@ -40,11 +39,19 @@ export const MoviesGrid = () => {
         .limit(1);
 
       if (!existingMovies || existingMovies.length === 0) {
-        console.log('No movies found, triggering initial parsing...');
+        console.log('No movies found, triggering torrent parsing...');
         try {
-          await triggerMovieParsing();
+          const { data, error } = await supabase.functions.invoke('parse-movies', {
+            body: { source: 'torrents' }
+          });
+          
+          if (error) {
+            console.error('Parsing error:', error);
+          } else {
+            console.log('Torrent parsing completed:', data);
+          }
         } catch (error) {
-          console.error('Failed to trigger initial parsing:', error);
+          console.error('Failed to trigger torrent parsing:', error);
         }
       }
     };
