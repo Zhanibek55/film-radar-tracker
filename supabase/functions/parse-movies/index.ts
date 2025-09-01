@@ -5,6 +5,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// TMDB API configuration
+const TMDB_API_KEY = Deno.env.get('TMDB_API_KEY') || '71267e8d8cb4eb11223acc05a37bd4ad';
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+
 interface MovieData {
   title: string;
   year?: number;
@@ -13,6 +18,11 @@ interface MovieData {
   poster_url?: string;
   quality?: string;
   type: 'movie' | 'series';
+  tmdb_id?: number;
+  backdrop_url?: string;
+  vote_count?: number;
+  popularity?: number;
+  genre_ids?: number[];
 }
 
 interface EpisodeData {
@@ -20,6 +30,88 @@ interface EpisodeData {
   episode_number: number;
   title?: string;
   air_date?: string;
+}
+
+// TMDB API helper functions
+async function tmdbRequest(endpoint: string): Promise<any> {
+  if (!TMDB_API_KEY) {
+    console.warn('TMDB API key not configured');
+    return null;
+  }
+
+  const url = `${TMDB_BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${TMDB_API_KEY}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('TMDB request failed:', error);
+    return null;
+  }
+}
+
+async function searchTMDB(title: string, type: 'movie' | 'tv' = 'movie', year?: number): Promise<any> {
+  const encodedTitle = encodeURIComponent(title);
+  const endpoint = `/search/${type}?query=${encodedTitle}`;
+  
+  const data = await tmdbRequest(endpoint);
+  if (!data || !data.results || data.results.length === 0) {
+    return null;
+  }
+
+  // If year is provided, try to find a match with the same year
+  if (year) {
+    const yearMatches = data.results.filter((item: any) => {
+      const itemYear = type === 'movie' 
+        ? parseInt(item.release_date?.split('-')[0] || '0')
+        : parseInt(item.first_air_date?.split('-')[0] || '0');
+      return Math.abs(itemYear - year) <= 1; // Allow 1 year difference
+    });
+
+    if (yearMatches.length > 0) {
+      return yearMatches[0];
+    }
+  }
+
+  return data.results[0]; // Return the first (most popular) result
+}
+
+async function enrichWithTMDB(movieData: MovieData): Promise<MovieData> {
+  try {
+    const tmdbType = movieData.type === 'series' ? 'tv' : 'movie';
+    const tmdbData = await searchTMDB(movieData.title, tmdbType, movieData.year);
+    
+    if (!tmdbData) {
+      console.log(`No TMDB data found for: ${movieData.title}`);
+      return movieData;
+    }
+
+    const isMovie = tmdbType === 'movie';
+    const enrichedData: MovieData = {
+      ...movieData,
+      tmdb_id: tmdbData.id,
+      title: isMovie ? tmdbData.title : tmdbData.name,
+      description: tmdbData.overview || movieData.description,
+      poster_url: tmdbData.poster_path ? `${TMDB_IMAGE_BASE_URL}${tmdbData.poster_path}` : movieData.poster_url,
+      backdrop_url: tmdbData.backdrop_path ? `https://image.tmdb.org/t/p/w1280${tmdbData.backdrop_path}` : undefined,
+      imdb_rating: tmdbData.vote_average || movieData.imdb_rating,
+      vote_count: tmdbData.vote_count,
+      popularity: tmdbData.popularity,
+      genre_ids: tmdbData.genre_ids,
+      year: movieData.year || (isMovie 
+        ? parseInt(tmdbData.release_date?.split('-')[0] || '0')
+        : parseInt(tmdbData.first_air_date?.split('-')[0] || '0'))
+    };
+
+    console.log(`Enriched with TMDB: ${enrichedData.title} (ID: ${tmdbData.id})`);
+    return enrichedData;
+  } catch (error) {
+    console.error(`Error enriching ${movieData.title} with TMDB:`, error);
+    return movieData;
+  }
 }
 
 // Parse multiple torrent sources via RSS feeds
@@ -528,8 +620,22 @@ Deno.serve(async (req) => {
     
     console.log(`Found ${movies.length} movies to process`);
 
-    // Insert or update movies
+    // Enrich movies with TMDB data
+    console.log('Enriching movies with TMDB data...');
+    const enrichedMovies: MovieData[] = [];
+    
     for (const movieData of movies) {
+      const enrichedMovie = await enrichWithTMDB(movieData);
+      enrichedMovies.push(enrichedMovie);
+      
+      // Add a small delay to respect TMDB API rate limits
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+
+    console.log(`Enriched ${enrichedMovies.length} movies with TMDB data`);
+
+    // Insert or update movies
+    for (const movieData of enrichedMovies) {
       // Check if movie already exists
       const { data: existingMovie } = await supabaseClient
         .from('movies')
