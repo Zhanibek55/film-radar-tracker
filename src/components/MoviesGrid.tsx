@@ -113,12 +113,35 @@ export const MoviesGrid = () => {
 
   const handleRefresh = async () => {
     try {
+      // Trigger fresh parsing
+      console.log('Triggering fresh torrent parsing...');
+      const { data: parseData, error: parseError } = await supabase.functions.invoke('parse-movies', {
+        body: { source: 'torrents', force: true }
+      });
+      
+      if (parseError) {
+        console.error('Parse error:', parseError);
+      } else {
+        console.log('Parse completed:', parseData);
+        // Wait a moment then refresh
+        setTimeout(async () => {
+          await refetch();
+          toast({
+            title: "Обновлено",
+            description: "Список фильмов обновлен через торрент-парсинг",
+          });
+        }, 2000);
+        return;
+      }
+      
+      // Fallback to regular refresh
       await refetch();
       toast({
-        title: "Обновлено",
+        title: "Обновлено", 
         description: "Список фильмов и сериалов обновлен",
       });
     } catch (error) {
+      console.error('Refresh error:', error);
       toast({
         title: "Ошибка",
         description: "Не удалось обновить список",
