@@ -123,16 +123,14 @@ export const MoviesGrid = () => {
           </p>
         </div>
         
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleRefresh}
-            disabled={isFetching}
-            variant="outline"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-            Обновить
-          </Button>
-        </div>
+        <Button 
+          onClick={handleRefresh}
+          disabled={isFetching}
+          variant="outline"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+          Обновить
+        </Button>
       </div>
 
       {/* Tabs */}
