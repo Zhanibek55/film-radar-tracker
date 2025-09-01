@@ -89,7 +89,10 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
   };
 
   return (
-    <Card className="group overflow-hidden bg-gradient-card border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-hover cursor-pointer">
+    <Card 
+      data-testid="movie-card" 
+      className="group overflow-hidden bg-gradient-card border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-hover cursor-pointer"
+    >
       {/* Poster Image - Made smaller */}
       <div className="relative aspect-[3/4] overflow-hidden bg-cinema-card">
         <img
@@ -132,7 +135,7 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
         {/* Rating Overlay - Kept prominent but more compact */}
         {movie.imdb_rating && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-rating-bg via-rating-bg/80 to-transparent p-2">
-            <div className="flex items-center justify-center gap-1 mb-0.5">
+            <div className="flex items-center justify-center gap-1 mb-0.5" data-testid="imdb-rating">
               <ImdbIcon className="w-6 h-3 drop-shadow-lg" />
               <span className="text-rating-gold font-bold text-base drop-shadow-lg">
                 {movie.imdb_rating}
