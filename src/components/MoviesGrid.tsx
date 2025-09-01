@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Film, Tv, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { triggerMovieParsing } from "@/utils/triggerParsing";
 
 interface Episode {
   season_number: number;
@@ -30,12 +31,34 @@ export const MoviesGrid = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("all");
 
+  // Trigger initial parsing on component mount if no movies exist
+  useEffect(() => {
+    const checkAndTriggerParsing = async () => {
+      const { data: existingMovies } = await supabase
+        .from('movies')
+        .select('id')
+        .limit(1);
+
+      if (!existingMovies || existingMovies.length === 0) {
+        console.log('No movies found, triggering initial parsing...');
+        try {
+          await triggerMovieParsing();
+        } catch (error) {
+          console.error('Failed to trigger initial parsing:', error);
+        }
+      }
+    };
+
+    checkAndTriggerParsing();
+  }, []);
+
   const { data: movies, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['movies'],
     queryFn: async () => {
       const { data: moviesData, error: moviesError } = await supabase
         .from('movies')
         .select('*')
+        .order('year', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (moviesError) throw moviesError;

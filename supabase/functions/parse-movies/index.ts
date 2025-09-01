@@ -74,33 +74,39 @@ async function parseMovieSites(): Promise<{ movies: MovieData[], episodes: { mov
 // Parse popular movies from OMDb API
 async function parseFromOMDb(movies: MovieData[]) {
   try {
-    // Current popular movie titles to search for
-    const popularTitles = [
-      'Dune Part Two', 'Oppenheimer', 'Barbie', 'Fast X', 'John Wick Chapter 4', 
-      'Spider-Man Across the Spider-Verse', 'Guardians of the Galaxy Vol. 3',
-      'Indiana Jones 5', 'Mission Impossible 7', 'The Flash', 'Transformers Rise',
-      'Killers of the Flower Moon', 'Napoleon', 'The Hunger Games Ballad',
-      'Aquaman 2', 'Wonka', 'Mean Girls', 'Anyone But You', 'Poor Things',
-      'The Zone of Interest', 'American Fiction', 'The Holdovers', 'Maestro'
+    // Popular movies with Russian titles
+    const popularMovies = [
+      { en: 'Dune Part Two', ru: 'Дюна: Часть вторая', year: 2024, rating: 8.5, quality: 'BluRay' },
+      { en: 'Oppenheimer', ru: 'Оппенгеймер', year: 2023, rating: 8.4, quality: 'BluRay' },
+      { en: 'Barbie', ru: 'Барби', year: 2023, rating: 6.9, quality: 'WEB-DL' },
+      { en: 'Fast X', ru: 'Форсаж 10', year: 2023, rating: 5.8, quality: 'WEBRip' },
+      { en: 'John Wick Chapter 4', ru: 'Джон Уик 4', year: 2023, rating: 7.7, quality: 'BluRay' },
+      { en: 'Spider-Man Across the Spider-Verse', ru: 'Человек-паук: Через вселенные', year: 2023, rating: 8.7, quality: 'WEB-DL' },
+      { en: 'Guardians of the Galaxy Vol. 3', ru: 'Стражи Галактики: Часть 3', year: 2023, rating: 7.9, quality: 'BluRay' },
+      { en: 'Indiana Jones 5', ru: 'Индиана Джонс: Колесо судьбы', year: 2023, rating: 6.5, quality: 'WEBRip' },
+      { en: 'Mission Impossible 7', ru: 'Миссия невыполнима: Смертельная расплата', year: 2023, rating: 7.7, quality: 'BluRay' },
+      { en: 'The Flash', ru: 'Флэш', year: 2023, rating: 6.9, quality: 'WEB-DL' },
+      { en: 'Transformers Rise', ru: 'Трансформеры: Восхождение звероботов', year: 2023, rating: 6.0, quality: 'WEBRip' },
+      { en: 'Killers of the Flower Moon', ru: 'Убийцы цветочной луны', year: 2023, rating: 7.6, quality: 'WEB-DL' },
+      { en: 'Napoleon', ru: 'Наполеон', year: 2023, rating: 6.4, quality: 'BluRay' },
+      { en: 'Wonka', ru: 'Вонка', year: 2023, rating: 7.1, quality: 'WEB-DL' },
+      { en: 'Poor Things', ru: 'Бедные-несчастные', year: 2023, rating: 7.9, quality: 'BluRay' },
+      { en: 'The Holdovers', ru: 'Остающиеся', year: 2023, rating: 7.9, quality: 'WEB-DL' }
     ];
 
-    for (const title of popularTitles) {
+    for (const movie of popularMovies) {
       try {
-        const response = await fetch(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=trilogy`);
-        const data = await response.json();
-        
-        if (data.Response === 'True') {
         movies.push({
-          title: data.Title,
-          year: parseInt(data.Year),
-          imdb_rating: parseFloat(data.imdbRating) || undefined,
-          description: data.Plot !== 'N/A' ? data.Plot : undefined,
-          quality: getQualityByYear(parseInt(data.Year)),
-          type: data.Type === 'series' ? 'series' : 'movie'
+          title: movie.ru,
+          year: movie.year,
+          imdb_rating: movie.rating,
+          description: `Популярный фильм ${movie.year} года с рейтингом IMDb ${movie.rating}`,
+          quality: movie.quality,
+          type: 'movie'
         });
-        }
+        console.log(`Added movie: ${movie.ru}`);
       } catch (error) {
-        console.log(`Error fetching ${title} from OMDb:`, error);
+        console.log(`Error adding movie ${movie.ru}:`, error);
       }
     }
   } catch (error) {
@@ -155,28 +161,28 @@ async function parseFromTVMaze(movies: MovieData[], episodes: { movie_title: str
 // Parse trending content from JustWatch-like sources
 async function parseFromJustWatch(movies: MovieData[]) {
   try {
-    // Recently released popular content
-    const recentPopular = [
-      { title: 'Dune Part Two', year: 2024, rating: 8.5, type: 'movie' },
-      { title: 'The Bear', year: 2024, rating: 8.7, type: 'series' },
-      { title: 'House of the Dragon', year: 2024, rating: 8.4, type: 'series' },
-      { title: 'Poor Things', year: 2023, rating: 7.9, type: 'movie' },
-      { title: 'The Zone of Interest', year: 2023, rating: 7.4, type: 'movie' },
-      { title: 'Maestro', year: 2023, rating: 6.5, type: 'movie' },
-      { title: 'American Fiction', year: 2023, rating: 7.5, type: 'movie' },
-      { title: 'The Holdovers', year: 2023, rating: 7.9, type: 'movie' },
-      { title: 'Killers of the Flower Moon', year: 2023, rating: 7.6, type: 'movie' },
-      { title: 'Napoleon', year: 2023, rating: 6.4, type: 'movie' }
+    // Popular series with Russian titles  
+    const popularSeries = [
+      { title: 'Медведь', year: 2024, rating: 8.7, type: 'series', quality: 'WEB-DL' },
+      { title: 'Дом дракона', year: 2024, rating: 8.4, type: 'series', quality: 'WEB-DL' },
+      { title: 'Одни из нас', year: 2023, rating: 8.8, type: 'series', quality: 'WEB-DL' },
+      { title: 'Среда', year: 2022, rating: 8.1, type: 'series', quality: 'WEBRip' },
+      { title: 'Очень странные дела', year: 2022, rating: 8.7, type: 'series', quality: 'WEB-DL' },
+      { title: 'Эйфория', year: 2022, rating: 8.4, type: 'series', quality: 'WEBRip' },
+      { title: 'Игра в кальмара', year: 2021, rating: 8.0, type: 'series', quality: 'WEB-DL' },
+      { title: 'Ход королевы', year: 2020, rating: 8.5, type: 'series', quality: 'WEB-DL' }
     ];
 
-    for (const content of recentPopular) {
+    for (const series of popularSeries) {
       movies.push({
-        title: content.title,
-        year: content.year,
-        imdb_rating: content.rating,
-        quality: getQualityByYear(content.year),
-        type: content.type as 'movie' | 'series'
+        title: series.title,
+        year: series.year,
+        imdb_rating: series.rating,
+        description: `Популярный сериал ${series.year} года с рейтингом IMDb ${series.rating}`,
+        quality: series.quality,
+        type: 'series'
       });
+      console.log(`Added series: ${series.title}`);
     }
   } catch (error) {
     console.error('Error parsing JustWatch:', error);
@@ -254,7 +260,7 @@ Deno.serve(async (req) => {
         .select('id')
         .eq('title', movieData.title)
         .eq('year', movieData.year)
-        .single();
+        .maybeSingle();
 
       if (existingMovie) {
         // Update existing movie
@@ -299,7 +305,7 @@ Deno.serve(async (req) => {
         .select('id')
         .eq('title', episodeData.movie_title)
         .eq('type', 'series')
-        .single();
+        .maybeSingle();
 
       if (movie) {
         // Insert episodes (ignore duplicates)
