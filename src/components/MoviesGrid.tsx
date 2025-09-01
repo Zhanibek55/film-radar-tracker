@@ -4,7 +4,7 @@ import { MovieCard } from "./MovieCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCw, Film, Tv, TrendingUp } from "lucide-react";
+import { RefreshCw, Film, Tv, TrendingUp, Zap, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 
@@ -24,11 +24,23 @@ interface Movie {
   quality?: string;
   type: 'movie' | 'series';
   episodes?: Episode[];
+  tmdb_id?: number;
+  poster_tmdb_url?: string;
+  backdrop_url?: string;
+  torrent_release_date?: string;
+  source_quality_score?: number;
+  last_episode_date?: string;
+  genres?: string[];
+  runtime?: number;
+  status?: string;
+  original_language?: string;
+  popularity?: number;
+  vote_count?: number;
 }
 
 export const MoviesGrid = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("fresh");
   const [isInitializing, setIsInitializing] = useState(false);
 
   const { data: movies, isLoading, refetch, isFetching } = useQuery({
@@ -37,7 +49,9 @@ export const MoviesGrid = () => {
       const { data: moviesData, error: moviesError } = await supabase
         .from('movies')
         .select('*')
-        .order('year', { ascending: false })
+        .order('torrent_release_date', { ascending: false, nullsLast: true })
+        .order('last_episode_date', { ascending: false, nullsLast: true })
+        .order('popularity', { ascending: false, nullsLast: true })
         .order('created_at', { ascending: false });
 
       if (moviesError) throw moviesError;
@@ -156,6 +170,24 @@ export const MoviesGrid = () => {
         return movie.type === "movie";
       case "series":
         return movie.type === "series";
+      case "fresh":
+        // Fresh releases: torrent released within last 7 days OR new episodes within 3 days
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        
+        const isFreshMovie = movie.type === 'movie' && 
+          movie.torrent_release_date && 
+          new Date(movie.torrent_release_date) > sevenDaysAgo;
+          
+        const isFreshSeries = movie.type === 'series' && 
+          movie.last_episode_date && 
+          new Date(movie.last_episode_date) > threeDaysAgo;
+          
+        return isFreshMovie || isFreshSeries;
+      case "quality":
+        // High quality releases: score >= 80 (1080p+ WEB-DL/BluRay)
+        return movie.source_quality_score && movie.source_quality_score >= 80;
       case "top":
         return movie.imdb_rating && movie.imdb_rating >= 8.0;
       default:
@@ -216,9 +248,13 @@ export const MoviesGrid = () => {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-cinema-card border-border">
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <Film className="w-4 h-4" />
-            Все
+          <TabsTrigger value="fresh" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Свежие
+          </TabsTrigger>
+          <TabsTrigger value="quality" className="flex items-center gap-2">
+            <Award className="w-4 h-4" />
+            Качество
           </TabsTrigger>
           <TabsTrigger value="movies" className="flex items-center gap-2">
             <Film className="w-4 h-4" />
@@ -232,14 +268,22 @@ export const MoviesGrid = () => {
             <TrendingUp className="w-4 h-4" />
             Топ рейтинг
           </TabsTrigger>
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <Film className="w-4 h-4" />
+            Все
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
           {filteredMovies.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground text-lg">
-                {activeTab === "top" 
-                  ? "Пока нет фильмов с высоким рейтингом"
+                {activeTab === "fresh" 
+                  ? "Пока нет свежих релизов (последние 7 дней для фильмов, 3 дня для сериалов)"
+                  : activeTab === "quality"
+                  ? "Пока нет релизов в высоком качестве (1080p+ WEB-DL/BluRay)"
+                  : activeTab === "top" 
+                  ? "Пока нет фильмов с высоким рейтингом (8.0+)"
                   : "Пока нет контента в этой категории"
                 }
               </p>

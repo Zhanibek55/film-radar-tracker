@@ -5,6 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const TMDB_API_KEY = '71267e8d8cb4eb11223acc05a37bd4ad'
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3'
+const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
+
 interface MovieData {
   title: string;
   year?: number;
@@ -13,6 +17,17 @@ interface MovieData {
   poster_url?: string;
   quality?: string;
   type: 'movie' | 'series';
+  tmdb_id?: number;
+  poster_tmdb_url?: string;
+  backdrop_url?: string;
+  torrent_release_date?: string;
+  source_quality_score?: number;
+  genres?: string[];
+  runtime?: number;
+  status?: string;
+  original_language?: string;
+  popularity?: number;
+  vote_count?: number;
 }
 
 interface EpisodeData {
@@ -20,59 +35,309 @@ interface EpisodeData {
   episode_number: number;
   title?: string;
   air_date?: string;
+  tmdb_id?: number;
+  still_path?: string;
+  vote_average?: number;
+  overview?: string;
+  runtime?: number;
 }
 
-// Parse multiple torrent sources via RSS feeds
+// TMDB API functions
+async function searchTMDBMovie(title: string, year?: number): Promise<any> {
+  try {
+    const yearParam = year ? `&year=${year}` : '';
+    const response = await fetch(
+      `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=ru-RU${yearParam}`
+    );
+    const data = await response.json();
+    return data.results?.[0] || null;
+  } catch (error) {
+    console.error('Error searching TMDB movie:', error);
+    return null;
+  }
+}
+
+async function searchTMDBTV(title: string, year?: number): Promise<any> {
+  try {
+    const yearParam = year ? `&first_air_date_year=${year}` : '';
+    const response = await fetch(
+      `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}&language=ru-RU${yearParam}`
+    );
+    const data = await response.json();
+    return data.results?.[0] || null;
+  } catch (error) {
+    console.error('Error searching TMDB TV:', error);
+    return null;
+  }
+}
+
+async function getTMDBMovieDetails(tmdbId: number): Promise<any> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/movie/${tmdbId}?api_key=${TMDB_API_KEY}&language=ru-RU`
+    );
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting TMDB movie details:', error);
+    return null;
+  }
+}
+
+async function getTMDBTVDetails(tmdbId: number): Promise<any> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/${tmdbId}?api_key=${TMDB_API_KEY}&language=ru-RU`
+    );
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting TMDB TV details:', error);
+    return null;
+  }
+}
+
+async function getTMDBTVSeason(tmdbId: number, seasonNumber: number): Promise<any> {
+  try {
+    const response = await fetch(
+      `${TMDB_BASE_URL}/tv/${tmdbId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=ru-RU`
+    );
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting TMDB TV season:', error);
+    return null;
+  }
+}
+
+// Get latest movies from TMDB (released in last 30 days)
+async function getTMDBLatestMovies(): Promise<any[]> {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+    
+    const response = await fetch(
+      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=ru-RU&sort_by=release_date.desc&primary_release_date.gte=${dateStr}&vote_average.gte=6.0&vote_count.gte=100&page=1`
+    );
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error getting latest TMDB movies:', error);
+    return [];
+  }
+}
+
+// Get latest TV shows from TMDB (aired in last 14 days)
+async function getTMDBLatestTV(): Promise<any[]> {
+  try {
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const dateStr = fourteenDaysAgo.toISOString().split('T')[0];
+    
+    const response = await fetch(
+      `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&language=ru-RU&sort_by=first_air_date.desc&first_air_date.gte=${dateStr}&vote_average.gte=7.0&vote_count.gte=50&page=1`
+    );
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error getting latest TMDB TV:', error);
+    return [];
+  }
+}
+
+function calculateQualityScore(quality: string): number {
+  const q = quality.toUpperCase();
+  if (q.includes('2160P') && q.includes('BLURAY')) return 100;
+  if (q.includes('2160P') && q.includes('WEB-DL')) return 95;
+  if (q.includes('2160P')) return 90;
+  if (q.includes('1080P') && q.includes('BLURAY')) return 85;
+  if (q.includes('1080P') && q.includes('WEB-DL')) return 80;
+  if (q.includes('1080P')) return 75;
+  if (q.includes('720P') && q.includes('BLURAY')) return 70;
+  if (q.includes('720P') && q.includes('WEB-DL')) return 65;
+  if (q.includes('720P')) return 60;
+  if (q.includes('480P')) return 40;
+  if (q.includes('CAMRIP')) return 10;
+  return 50;
+}
+
+async function enrichWithTMDB(movieData: MovieData): Promise<MovieData> {
+  try {
+    let tmdbResult = null;
+    
+    if (movieData.type === 'movie') {
+      tmdbResult = await searchTMDBMovie(movieData.title, movieData.year);
+      if (tmdbResult) {
+        const details = await getTMDBMovieDetails(tmdbResult.id);
+        if (details) {
+          return {
+            ...movieData,
+            tmdb_id: tmdbResult.id,
+            poster_tmdb_url: tmdbResult.poster_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.poster_path}` : undefined,
+            backdrop_url: tmdbResult.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.backdrop_path}` : undefined,
+            description: tmdbResult.overview || movieData.description,
+            imdb_rating: tmdbResult.vote_average || movieData.imdb_rating,
+            genres: details.genres?.map((g: any) => g.name) || [],
+            runtime: details.runtime,
+            status: details.status,
+            original_language: details.original_language,
+            popularity: tmdbResult.popularity,
+            vote_count: tmdbResult.vote_count,
+            source_quality_score: calculateQualityScore(movieData.quality || ''),
+          };
+        }
+      }
+    } else if (movieData.type === 'series') {
+      tmdbResult = await searchTMDBTV(movieData.title, movieData.year);
+      if (tmdbResult) {
+        const details = await getTMDBTVDetails(tmdbResult.id);
+        if (details) {
+          return {
+            ...movieData,
+            tmdb_id: tmdbResult.id,
+            poster_tmdb_url: tmdbResult.poster_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.poster_path}` : undefined,
+            backdrop_url: tmdbResult.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbResult.backdrop_path}` : undefined,
+            description: tmdbResult.overview || movieData.description,
+            imdb_rating: tmdbResult.vote_average || movieData.imdb_rating,
+            genres: details.genres?.map((g: any) => g.name) || [],
+            runtime: details.episode_run_time?.[0],
+            status: details.status,
+            original_language: details.original_language,
+            popularity: tmdbResult.popularity,
+            vote_count: tmdbResult.vote_count,
+            source_quality_score: calculateQualityScore(movieData.quality || ''),
+          };
+        }
+      }
+    }
+    
+    return {
+      ...movieData,
+      source_quality_score: calculateQualityScore(movieData.quality || ''),
+    };
+  } catch (error) {
+    console.error('Error enriching with TMDB:', error);
+    return {
+      ...movieData,
+      source_quality_score: calculateQualityScore(movieData.quality || ''),
+    };
+  }
+}
+
+// Parse multiple sources: TMDB for metadata + torrent sources for releases
 async function parseMovieSites(): Promise<{ movies: MovieData[], episodes: { movie_title: string, episodes: EpisodeData[] }[] }> {
   const movies: MovieData[] = [];
   const episodes: { movie_title: string, episodes: EpisodeData[] }[] = [];
 
   try {
-    console.log('Starting to parse from torrent RSS feeds...');
+    console.log('Starting comprehensive parsing with TMDB integration...');
 
-    // 1. Parse from YTS (movies)
+    // Phase 1: Get fresh content from TMDB
+    console.log('Phase 1: Getting latest releases from TMDB...');
+    await parseTMDBLatestContent(movies);
+
+    // Phase 2: Parse torrent sources for quality releases
+    console.log('Phase 2: Parsing torrent sources...');
     await parseYTSMovies(movies);
-
-    // 2. Parse from EZTV (series)  
     await parseEZTVSeries(movies, episodes);
-
-    // 3. Parse from 1337x recent uploads
     await parse1337xRecent(movies);
 
-    // 4. Parse from Nyaa for anime
-    await parseNyaaAnime(movies);
+    // Phase 3: Enrich all data with TMDB metadata
+    console.log('Phase 3: Enriching with TMDB metadata...');
+    const enrichedMovies: MovieData[] = [];
+    for (const movie of movies) {
+      const enriched = await enrichWithTMDB(movie);
+      enrichedMovies.push(enriched);
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
-    console.log(`Total parsed: ${movies.length} movies/series`);
+    console.log(`Total processed: ${enrichedMovies.length} movies/series with TMDB data`);
+    
+    return { movies: enrichedMovies, episodes };
     
   } catch (error) {
-    console.error('Error parsing torrent sources:', error);
+    console.error('Error in comprehensive parsing:', error);
+    return { movies, episodes };
   }
+}
 
-  return { movies, episodes };
+// Parse latest content from TMDB
+async function parseTMDBLatestContent(movies: MovieData[]) {
+  try {
+    // Get latest movies
+    const latestMovies = await getTMDBLatestMovies();
+    for (const tmdbMovie of latestMovies.slice(0, 20)) { // Limit to 20 latest
+      movies.push({
+        title: tmdbMovie.title,
+        year: new Date(tmdbMovie.release_date).getFullYear(),
+        imdb_rating: tmdbMovie.vote_average,
+        description: tmdbMovie.overview,
+        type: 'movie',
+        tmdb_id: tmdbMovie.id,
+        poster_tmdb_url: tmdbMovie.poster_path ? `${TMDB_IMAGE_BASE_URL}${tmdbMovie.poster_path}` : undefined,
+        backdrop_url: tmdbMovie.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbMovie.backdrop_path}` : undefined,
+        popularity: tmdbMovie.popularity,
+        vote_count: tmdbMovie.vote_count,
+        quality: '1080p.WEB-DL', // Default quality for new releases
+        source_quality_score: 80,
+        torrent_release_date: new Date().toISOString(), // Assume recent
+      });
+    }
+
+    // Get latest TV shows
+    const latestTV = await getTMDBLatestTV();
+    for (const tmdbTV of latestTV.slice(0, 15)) { // Limit to 15 latest
+      movies.push({
+        title: tmdbTV.name,
+        year: new Date(tmdbTV.first_air_date).getFullYear(),
+        imdb_rating: tmdbTV.vote_average,
+        description: tmdbTV.overview,
+        type: 'series',
+        tmdb_id: tmdbTV.id,
+        poster_tmdb_url: tmdbTV.poster_path ? `${TMDB_IMAGE_BASE_URL}${tmdbTV.poster_path}` : undefined,
+        backdrop_url: tmdbTV.backdrop_path ? `${TMDB_IMAGE_BASE_URL}${tmdbTV.backdrop_path}` : undefined,
+        popularity: tmdbTV.popularity,
+        vote_count: tmdbTV.vote_count,
+        quality: '1080p.WEB-DL', // Default quality for new releases
+        source_quality_score: 80,
+        torrent_release_date: new Date().toISOString(), // Assume recent
+        last_episode_date: new Date().toISOString(), // Recent episode
+      });
+    }
+
+    console.log(`Added ${latestMovies.length} latest movies and ${latestTV.length} latest TV shows from TMDB`);
+  } catch (error) {
+    console.error('Error parsing TMDB latest content:', error);
+  }
 }
 
 // Parse YTS movies (high quality movie torrents)
 async function parseYTSMovies(movies: MovieData[]) {
   try {
     console.log('Parsing YTS movies...');
-    const response = await fetch('https://yts.mx/api/v2/list_movies.json?limit=50&sort_by=date_added');
+    const response = await fetch('https://yts.mx/api/v2/list_movies.json?limit=30&sort_by=date_added&minimum_rating=6');
     const data = await response.json();
     
     if (data.status === 'ok' && data.data.movies) {
       for (const movie of data.data.movies) {
-        const russianTitle = translateToRussian(movie.title);
         const bestQuality = getBestTorrentQuality(movie.torrents || []);
+        const qualityScore = calculateQualityScore(bestQuality);
         
-        movies.push({
-          title: russianTitle,
-          year: movie.year,
-          imdb_rating: movie.rating,
-          description: movie.synopsis || movie.description_full || `Фильм ${movie.year} года`,
-          quality: bestQuality,
-          type: 'movie'
-        });
-        
-        console.log(`Added YTS movie: ${russianTitle} (${bestQuality})`);
+        // Only add if quality is decent (720p+)
+        if (qualityScore >= 60) {
+          movies.push({
+            title: movie.title,
+            year: movie.year,
+            imdb_rating: movie.rating,
+            description: movie.synopsis || movie.description_full || `${movie.title} (${movie.year})`,
+            quality: bestQuality,
+            type: 'movie',
+            source_quality_score: qualityScore,
+            torrent_release_date: movie.date_uploaded ? new Date(movie.date_uploaded).toISOString() : new Date().toISOString(),
+          });
+          
+          console.log(`Added YTS movie: ${movie.title} (${bestQuality}, score: ${qualityScore})`);
+        }
       }
     }
   } catch (error) {
@@ -528,18 +793,35 @@ Deno.serve(async (req) => {
     
     console.log(`Found ${movies.length} movies to process`);
 
-    // Insert or update movies
+    // Insert or update movies with improved duplicate detection
     for (const movieData of movies) {
-      // Check if movie already exists
-      const { data: existingMovie } = await supabaseClient
-        .from('movies')
-        .select('id')
-        .eq('title', movieData.title)
-        .eq('year', movieData.year)
-        .maybeSingle();
+      let existingMovie = null;
+      
+      // First try to find by TMDB ID if available
+      if (movieData.tmdb_id) {
+        const { data } = await supabaseClient
+          .from('movies')
+          .select('id, title')
+          .eq('tmdb_id', movieData.tmdb_id)
+          .eq('type', movieData.type)
+          .maybeSingle();
+        existingMovie = data;
+      }
+      
+      // Fallback to title and year matching
+      if (!existingMovie) {
+        const { data } = await supabaseClient
+          .from('movies')
+          .select('id, title')
+          .eq('title', movieData.title)
+          .eq('year', movieData.year)
+          .eq('type', movieData.type)
+          .maybeSingle();
+        existingMovie = data;
+      }
 
       if (existingMovie) {
-        // Update existing movie
+        // Update existing movie with new data
         const { error: updateError } = await supabaseClient
           .from('movies')
           .update({
@@ -552,7 +834,7 @@ Deno.serve(async (req) => {
         if (updateError) {
           console.error('Error updating movie:', updateError);
         } else {
-          console.log(`Updated movie: ${movieData.title}`);
+          console.log(`Updated movie: ${movieData.title} (TMDB ID: ${movieData.tmdb_id})`);
         }
       } else {
         // Insert new movie
@@ -562,13 +844,13 @@ Deno.serve(async (req) => {
             ...movieData,
             last_checked: new Date().toISOString()
           })
-          .select('id, title')
+          .select('id, title, tmdb_id')
           .single();
 
         if (insertError) {
           console.error('Error inserting movie:', insertError);
         } else {
-          console.log(`Inserted new movie: ${movieData.title}`);
+          console.log(`Inserted new movie: ${movieData.title} (TMDB ID: ${movieData.tmdb_id})`);
         }
       }
     }

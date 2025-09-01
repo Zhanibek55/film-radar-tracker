@@ -65,6 +65,18 @@ export type Database = {
           type: string
           updated_at: string
           year: number | null
+          tmdb_id: number | null
+          poster_tmdb_url: string | null
+          backdrop_url: string | null
+          torrent_release_date: string | null
+          source_quality_score: number | null
+          last_episode_date: string | null
+          genres: string[] | null
+          runtime: number | null
+          status: string | null
+          original_language: string | null
+          popularity: number | null
+          vote_count: number | null
         }
         Insert: {
           created_at?: string
@@ -78,6 +90,18 @@ export type Database = {
           type: string
           updated_at?: string
           year?: number | null
+          tmdb_id?: number | null
+          poster_tmdb_url?: string | null
+          backdrop_url?: string | null
+          torrent_release_date?: string | null
+          source_quality_score?: number | null
+          last_episode_date?: string | null
+          genres?: string[] | null
+          runtime?: number | null
+          status?: string | null
+          original_language?: string | null
+          popularity?: number | null
+          vote_count?: number | null
         }
         Update: {
           created_at?: string
@@ -91,6 +115,18 @@ export type Database = {
           type?: string
           updated_at?: string
           year?: number | null
+          tmdb_id?: number | null
+          poster_tmdb_url?: string | null
+          backdrop_url?: string | null
+          torrent_release_date?: string | null
+          source_quality_score?: number | null
+          last_episode_date?: string | null
+          genres?: string[] | null
+          runtime?: number | null
+          status?: string | null
+          original_language?: string | null
+          popularity?: number | null
+          vote_count?: number | null
         }
         Relationships: []
       }

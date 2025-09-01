@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Film, Tv } from "lucide-react";
+import { Clock, Film, Tv, Zap } from "lucide-react";
 import { ImdbIcon } from "./ImdbIcon";
 import moviePlaceholder from "@/assets/movie-placeholder.jpg";
 
@@ -20,6 +20,18 @@ interface Movie {
   quality?: string;
   type: 'movie' | 'series';
   episodes?: Episode[];
+  tmdb_id?: number;
+  poster_tmdb_url?: string;
+  backdrop_url?: string;
+  torrent_release_date?: string;
+  source_quality_score?: number;
+  last_episode_date?: string;
+  genres?: string[];
+  runtime?: number;
+  status?: string;
+  original_language?: string;
+  popularity?: number;
+  vote_count?: number;
 }
 
 interface MovieCardProps {
@@ -61,13 +73,27 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
   };
 
   const latestEpisode = getLatestEpisode();
+  
+  // Check if content is fresh
+  const isFresh = () => {
+    const now = new Date();
+    if (movie.type === 'movie' && movie.torrent_release_date) {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return new Date(movie.torrent_release_date) > sevenDaysAgo;
+    }
+    if (movie.type === 'series' && movie.last_episode_date) {
+      const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      return new Date(movie.last_episode_date) > threeDaysAgo;
+    }
+    return false;
+  };
 
   return (
     <Card className="group overflow-hidden bg-gradient-card border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-hover cursor-pointer">
       {/* Poster Image - Made smaller */}
       <div className="relative aspect-[3/4] overflow-hidden bg-cinema-card">
         <img
-          src={movie.poster_url || moviePlaceholder}
+          src={movie.poster_tmdb_url || movie.poster_url || moviePlaceholder}
           alt={movie.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(e) => {
@@ -76,13 +102,23 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
         />
         
         {/* Quality Badge - Made smaller */}
-        {movie.quality && (
-          <Badge 
-            className={`absolute top-1.5 left-1.5 ${getQualityColor(movie.quality)} font-bold text-xs px-1.5 py-0.5 shadow-lg`}
-          >
-            {movie.quality}
-          </Badge>
-        )}
+        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1">
+          {movie.quality && (
+            <Badge 
+              className={`${getQualityColor(movie.quality)} font-bold text-xs px-1.5 py-0.5 shadow-lg`}
+            >
+              {movie.quality}
+            </Badge>
+          )}
+          {isFresh() && (
+            <Badge 
+              className="bg-green-600 text-white font-bold text-xs px-1.5 py-0.5 shadow-lg flex items-center gap-1"
+            >
+              <Zap className="w-2 h-2" />
+              НОВОЕ
+            </Badge>
+          )}
+        </div>
 
         {/* Type Icon - Made smaller */}
         <div className="absolute top-1.5 right-1.5 bg-background/90 backdrop-blur-sm rounded-full p-1 shadow-lg">
